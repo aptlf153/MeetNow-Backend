@@ -5,17 +5,20 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.meetnow.Entity.User;
-import com.example.meetnow.repository.UserRepository;
+import com.example.meetnow.repository.UserIdRepository;
 
 @Service
 public class UserService {
+	
 	    @Autowired
-	    private UserRepository userRepository;
+	    private UserIdRepository useridRepository;
 
 	    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public boolean login(String userid, String password) {
-        User user = userRepository.findByUserid(userid); // DB에서 사용자 조회
+    	
+        User user = useridRepository.findByUserid(userid);
+        
         if (user != null) {
             // 비밀번호 확인
             return encoder.matches(password, user.getPassword());
@@ -27,6 +30,6 @@ public class UserService {
     public void register(User user) {
         // 비밀번호 해시화
         user.setPassword(encoder.encode(user.getPassword()));
-        userRepository.save(user); // DB에 사용자 저장
+        useridRepository.save(user); // DB에 사용자 저장
     }
 }

@@ -15,7 +15,21 @@ public class User {
     private Long id;
     private String userid;
     private String password; // 해시된 비밀번호
+    private String email;
+    private String nickname;
     
+	public String getNickname() {
+		return nickname;
+	}
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
 	public Long getId() {
 		return id;
 	}
