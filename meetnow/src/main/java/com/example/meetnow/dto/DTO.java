@@ -9,8 +9,17 @@ public class DTO {
 	private String password;
 	private String phone;
 	private String email;
+	private String token;
     
-    // 기본 생성자
+    public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
+	}
+
+	// 기본 생성자
     public DTO() {
     }
 
