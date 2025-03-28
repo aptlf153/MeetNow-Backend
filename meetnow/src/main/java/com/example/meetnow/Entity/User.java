@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "test_table") // 데이터베이스의 테이블 이름
+@Table(name = "user") // 데이터베이스의 테이블 이름
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
