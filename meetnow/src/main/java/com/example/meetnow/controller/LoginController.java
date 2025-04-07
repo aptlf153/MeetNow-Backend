@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.meetnow.service.UserService;
 import com.example.meetnow.util.JwtUtil;
-import com.example.meetnow.util.LoginResponse;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.example.meetnow.dto.*;
@@ -39,7 +37,7 @@ public class LoginController {
 
 	//로그인
     @PostMapping("/api/users/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody DTO data, HttpServletResponse response) {
+    public ResponseEntity<Boolean> login(@RequestBody DTO data, HttpServletResponse response) {
         boolean success = userService.login(data.getUserid(), data.getPassword());
 
         if (success) {
@@ -57,36 +55,25 @@ public class LoginController {
             ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
                     .httpOnly(true) // 클라이언트에서 접근 불가
                     .path("/")
-                    .maxAge(600) //10분
+                    .maxAge(60) //10분
                     .sameSite("Lax") // 같은 도메인에서만
                     .secure(false) // 개발 환경에서는 false로 설정
                     .domain("localhost") // 로컬 환경에서만 유효
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
-                    .httpOnly(true)
+            
+            ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true) // 클라이언트에서 접근 불가
                     .path("/")
-                    .maxAge(60 * 60 * 24 * 7) // 7일 동안 유효 60 * 60 * 24 * 7
+                    .maxAge(60 * 24 * 7)
                     .sameSite("Lax") // 같은 도메인에서만
                     .secure(false) // 개발 환경에서는 false로 설정
                     .domain("localhost") // 로컬 환경에서만 유효
                     .build();
-            
-         // 예시 변경 후 쿠키 설정
-            /*ResponseCookie secureAccessCookie = ResponseCookie.from("accessToken", accessToken)
-                    .httpOnly(true)
-                    .path("/")
-                    .sameSite("Lax") // CSRF를 방지하기 위해 설정
-                    .secure(true) // 배포 환경에서는 true로 설정
-                    .domain("yourdomain.com") // 실제 도메인으로 변경
-                    .build();
-            		response.addHeader(HttpHeaders.SET_COOKIE, secureAccessCookie.toString());*/
-            
-            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());     
 
             // 응답 본문 반환
-            return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken));
+            return ResponseEntity.ok(true);
         } else {
             // 로그인 실패 시 UNAUTHORIZED 응답 반환
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
