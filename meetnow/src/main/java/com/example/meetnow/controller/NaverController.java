@@ -108,7 +108,7 @@ public class NaverController {
                 String email = responseNode.get("email").asText();
                 String name = responseNode.get("name").asText();
                 
-    			boolean idCheck = registerUser.idCheck(id.toString());
+    			boolean idCheck = registerUser.idCheck(id.toString()+"_Naver");
     			
     			if(!idCheck) 
     			{

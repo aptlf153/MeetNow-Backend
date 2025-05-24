@@ -126,7 +126,7 @@ public class KakaoLoginController {
 				e.printStackTrace();
 			}
 			
-			boolean idCheck = registerUser.idCheck(kakaoUserInfoDto.getId().toString());
+			boolean idCheck = registerUser.idCheck(kakaoUserInfoDto.getId().toString()+"_Kakao");
 			
 			
 			if(!idCheck) 

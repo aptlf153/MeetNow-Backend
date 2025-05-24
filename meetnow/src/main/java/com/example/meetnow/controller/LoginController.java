@@ -47,21 +47,22 @@ public class LoginController {
             String accessToken = jwtUtil.generateAccessToken(data.getUserid());
             String refreshToken = jwtUtil.generateRefreshToken(data.getUserid());
 
-            // 현재 시간
             Timestamp createdDate = new Timestamp(System.currentTimeMillis());
-            // 만료 시간 (7일 후)
             Timestamp expirationDate = new Timestamp(System.currentTimeMillis() + 604800000); // 7일 후
 
-            String sql = "INSERT INTO refresh_tokens (userid, refreshtoken,expiration_date,created_date) VALUES (?,?,?,?)";
-            jdbcTemplate.update(sql, data.getUserid(), refreshToken, createdDate, expirationDate);
+            // 기존 토큰 삭제 (userid 기준)
+            String deleteSql = "DELETE FROM refresh_tokens WHERE userid = ?";
+            jdbcTemplate.update(deleteSql, data.getUserid());
 
-            //쿠키 만들기 컴포넌트
+            String insertSql = "INSERT INTO refresh_tokens (userid, refreshtoken,expiration_date,created_date) VALUES (?,?,?,?)";
+            jdbcTemplate.update(insertSql, data.getUserid(), refreshToken, createdDate, expirationDate);
+            
+            
+            // 쿠키 설정
             cookieUtil.addCookies(response, accessToken, refreshToken);
 
-            // 응답 본문 반환
             return ResponseEntity.ok(true);
         } else {
-            // 로그인 실패 시 UNAUTHORIZED 응답 반환
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
     }

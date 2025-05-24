@@ -99,7 +99,7 @@ public class GoogleLoginController {
             String name = userInfoJson.get("name").asText();
             String email = userInfoJson.get("email").asText();
 
-            boolean idCheck = registerUser.idCheck(id.toString());
+            boolean idCheck = registerUser.idCheck(id.toString() + "_google");
 
             if (!idCheck) {
                 String Password = UUID.randomUUID().toString();
