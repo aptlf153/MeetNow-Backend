@@ -40,8 +40,6 @@ public class JwtUtil {
     // JWT에서 사용자 이름 추출
     public String extractUsername(String token) {
     	
-    	System.out.println(token);
-    	
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
