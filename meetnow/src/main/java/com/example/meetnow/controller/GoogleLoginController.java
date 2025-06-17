@@ -98,13 +98,38 @@ public class GoogleLoginController {
             String id = userInfoJson.get("sub").asText();
             String name = userInfoJson.get("name").asText();
             String email = userInfoJson.get("email").asText();
+            
+            String prefix = "구글회원";
 
-            boolean idCheck = registerUser.idCheck(id.toString() + "_google");
+            // 1. 대략적인 시작점 구하기 (이 자체는 매우 빠름)
+            String countSql = "SELECT COUNT(*) FROM user WHERE nickname LIKE ?";
+            int count = jdbcTemplate.queryForObject(countSql, Integer.class, prefix + "%");
+
+            // 2. 예상되는 숫자부터 중복 체크하면서 증가
+            int suffix = count + 1;
+            String finalNickname;
+
+            while (true) {
+                String tempNickname = prefix + suffix;
+
+                String checkSql = "SELECT COUNT(*) FROM user WHERE nickname = ?";
+                int exists = jdbcTemplate.queryForObject(checkSql, Integer.class, tempNickname);
+
+                if (exists == 0) {
+                    finalNickname = tempNickname;
+                    break;
+                }
+
+                suffix++;
+            }	              
+            
+
+            boolean idCheck = registerUser.idCheck(id.toString());
 
             if (!idCheck) {
                 String Password = UUID.randomUUID().toString();
                 String sql = "INSERT INTO user (name,nickname,gender,userid,password,phone,email) VALUES (?,?,?,?,?,?,?)";
-                jdbcTemplate.update(sql, name + "_google", email + "_google", "other", id + "_google", Password, "000000000000", email + "_google");
+                jdbcTemplate.update(sql, "알수없음", finalNickname, "other", id, Password, "000000000000", email);
             }
 
             String accessToken1 = jwtUtil.generateAccessToken(id.toString());

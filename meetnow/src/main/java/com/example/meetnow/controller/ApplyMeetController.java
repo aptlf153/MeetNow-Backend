@@ -43,14 +43,22 @@ public class ApplyMeetController {
         return "신청 완료!";
     }
 
+    
     @GetMapping("/api/applications/meeting/{meetingId}")
     public List<Map<String, Object>> getApplicants(@PathVariable int meetingId) {
-        String sql = "SELECT userid, accepted FROM application WHERE meet_id = ? ORDER BY applied_at ASC";
+        String sql = "SELECT a.userid, a.accepted, u.nickname " +
+                     "FROM application a " +
+                     "JOIN user u ON a.userid = u.userid " +
+                     "WHERE a.meet_id = ? " +
+                     "ORDER BY a.applied_at ASC";
+
         return jdbcTemplate.query(sql, (rs, rowNum) -> Map.of(
             "userid", rs.getString("userid"),
-            "accepted", rs.getBoolean("accepted")
+            "accepted", rs.getBoolean("accepted"),
+            "nickname", rs.getString("nickname")
         ), meetingId);
     }
+
 
     @PutMapping("/api/applications/accept")
     public String acceptApplicant(@RequestBody Map<String, String> data) {
@@ -83,12 +91,21 @@ public class ApplyMeetController {
         return Map.of("userid", userid);
     }
 
+    //댓글 모두 불러오기
     @GetMapping("/api/comments/meeting/{meetingId}")
     public List<Map<String, Object>> getComments(@PathVariable int meetingId) {
-        String sql = "SELECT id, userid, content, created_at FROM comment WHERE meeting_id = ? ORDER BY created_at DESC";
+        String sql = """
+            SELECT c.id, c.userid, c.content, c.created_at, u.nickname
+            FROM comment c
+            INNER JOIN user u ON c.userid = u.userid
+            WHERE c.meeting_id = ?
+            ORDER BY c.created_at DESC
+        """;
+
         return jdbcTemplate.query(sql, (rs, rowNum) -> Map.of(
             "id", rs.getInt("id"),
             "userid", rs.getString("userid"),
+            "nickname", rs.getString("nickname"),
             "content", rs.getString("content"),
             "createdAt", rs.getTimestamp("created_at").toString()
         ), meetingId);

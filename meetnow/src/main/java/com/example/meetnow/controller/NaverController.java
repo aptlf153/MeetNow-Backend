@@ -104,17 +104,44 @@ public class NaverController {
                 JsonNode responseNode = userInfoJson.get("response");
 
                 String id = responseNode.get("id").asText();
-                String nickname = responseNode.get("nickname").asText();
+                
+                
+             //닉네임 임의 부여
+             String prefix = "네이버회원";
+
+             // 1. 대략적인 시작점 구하기 (이 자체는 매우 빠름)
+             String countSql = "SELECT COUNT(*) FROM user WHERE nickname LIKE ?";
+             int count = jdbcTemplate.queryForObject(countSql, Integer.class, prefix + "%");
+
+             // 2. 예상되는 숫자부터 중복 체크하면서 증가
+             int suffix = count + 1;
+             String finalNickname;
+
+             while (true) {
+                 String tempNickname = prefix + suffix;
+
+                 String checkSql = "SELECT COUNT(*) FROM user WHERE nickname = ?";
+                 int exists = jdbcTemplate.queryForObject(checkSql, Integer.class, tempNickname);
+
+                 if (exists == 0) {
+                     finalNickname = tempNickname;
+                     break;
+                 }
+
+                 suffix++;
+             }
+                
+                
                 String email = responseNode.get("email").asText();
                 String name = responseNode.get("name").asText();
                 
-    			boolean idCheck = registerUser.idCheck(id.toString()+"_Naver");
+    			boolean idCheck = registerUser.idCheck(id.toString());
     			
     			if(!idCheck) 
     			{
     				String Password = UUID.randomUUID().toString();
     	            String sql = "INSERT INTO user (name,nickname,gender,userid,password,phone,email) VALUES (?,?,?,?,?,?,?)";
-    	            jdbcTemplate.update(sql, nickname+"_Naver",email+"_Naver","other",id+"_Naver",Password,"000000000000",email+"_Naver");
+    	            jdbcTemplate.update(sql, "알수없음",finalNickname,"other",id,Password,"000000000000",email);
     			}
     			
     				

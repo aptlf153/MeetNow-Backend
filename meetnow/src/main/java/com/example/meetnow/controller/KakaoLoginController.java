@@ -126,7 +126,7 @@ public class KakaoLoginController {
 				e.printStackTrace();
 			}
 			
-			boolean idCheck = registerUser.idCheck(kakaoUserInfoDto.getId().toString()+"_Kakao");
+			boolean idCheck = registerUser.idCheck(kakaoUserInfoDto.getId().toString());
 			
 			
 			if(!idCheck) 
@@ -134,12 +134,38 @@ public class KakaoLoginController {
 				
 	            String sql = "INSERT INTO user (name,nickname,gender,userid,password,phone,email) VALUES (?,?,?,?,?,?,?)";
 	            
-	            String kakaonickname = kakaoUserInfoDto.getProperties().getNickname();
-	            String kakaoemail = kakaoUserInfoDto.getKakaoAccount().getEmail()+"_Kakao";
-	            String kakaoid = kakaoUserInfoDto.getId()+"_Kakao";
+	            
+	             //닉네임 임의 부여
+	             String prefix = "카카오회원";
+
+	             // 1. 대략적인 시작점 구하기 (이 자체는 매우 빠름)
+	             String countSql = "SELECT COUNT(*) FROM user WHERE nickname LIKE ?";
+	             int count = jdbcTemplate.queryForObject(countSql, Integer.class, prefix + "%");
+
+	             // 2. 예상되는 숫자부터 중복 체크하면서 증가
+	             int suffix = count + 1;
+	             String finalNickname;
+
+	             while (true) {
+	                 String tempNickname = prefix + suffix;
+
+	                 String checkSql = "SELECT COUNT(*) FROM user WHERE nickname = ?";
+	                 int exists = jdbcTemplate.queryForObject(checkSql, Integer.class, tempNickname);
+
+	                 if (exists == 0) {
+	                     finalNickname = tempNickname;
+	                     break;
+	                 }
+
+	                 suffix++;
+	             }	            
+	             
+	            
+	            String kakaoemail = kakaoUserInfoDto.getKakaoAccount().getEmail();
+	            String kakaoid = kakaoUserInfoDto.getId()+"";
 	            String Password = UUID.randomUUID().toString();
 	            
-	            jdbcTemplate.update(sql, kakaonickname,kakaoemail,"other",kakaoid,Password,"000000000000",kakaoemail);
+	            jdbcTemplate.update(sql, "알수없음",finalNickname,"other",kakaoid,Password,"000000000000",kakaoemail);
 			}
 			
 				
