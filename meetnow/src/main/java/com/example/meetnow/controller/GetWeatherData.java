@@ -3,56 +3,58 @@ package com.example.meetnow.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.example.meetnow.util.ApiExplorer;
 import com.example.meetnow.util.ApiExplorer2;
+import com.example.meetnow.util.ApiExplorerShort;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173") // React 앱의 URL
 public class GetWeatherData {
 
-	@Autowired
-	private ApiExplorer apiexplorer;
-	
-	@Autowired
-	private ApiExplorer2 apiexplorer2;
-	
-	@PostMapping("/api/user/weather")
-    public String signup(@RequestBody WeatherData data) throws IOException {
-		
+    @Autowired
+    private ApiExplorer apiexplorer;
+
+    @Autowired
+    private ApiExplorer2 apiexplorer2;
+
+    @Autowired
+    private ApiExplorerShort apiexplorerShort; // 단기예보용 클래스 (추가 필요)
+
+    @PostMapping("/api/user/weather")
+    public String getWeather(@RequestBody WeatherData data) throws IOException {
         String date = data.getDate();
         double latitude = Math.round(Double.parseDouble(data.getLatitude()) * 100.0) / 100.0;
         double longitude = Math.round(Double.parseDouble(data.getLongitude()) * 100.0) / 100.0;
-        int nx = (int) Math.round(latitude);
+        int nx = (int) Math.round(latitude);  // 실 사용 시 위경도 → x,y 변환 필요
         int ny = (int) Math.round(longitude);
-        
-        // 오늘 날짜 구하기
+
+        // 날짜 처리
         LocalDate today = LocalDate.now();
+        LocalDate inputDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        long daysDiff = ChronoUnit.DAYS.between(today, inputDate);
 
-        // 입력된 날짜를 LocalDate로 변환하기 위한 포맷 설정
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-        // 입력된 날짜 문자열을 LocalDate로 변환
-        LocalDate inputDate = LocalDate.parse(date, formatter);
-
-        // 비교
-        if (inputDate.isEqual(today)) {
-        	return "날씨 : " + apiexplorer.main(nx,ny, date);
-        } else if (inputDate.isAfter(today)) {
-        	return "날씨 : " + apiexplorer2.main(date);
+        // API 분기
+        if (daysDiff == 0) {
+            return "날씨 : " + apiexplorer.main(nx, ny, date); // 초단기 실황
+        } else if (daysDiff == 1 || daysDiff == 2) {
+            return "날씨 : " + apiexplorerShort.main(nx, ny, date); // 단기예보
+        } else if (daysDiff >= 3 && daysDiff <= 10) {
+            return "날씨 : " + apiexplorer2.main(nx, ny, date); // 중기예보
         } else {
-        	return "알수없음";
-        }    
-	}
+            return "선택한 날짜는 예보 범위를 벗어났습니다.";
+        }
+    }
 
-    // 요청 데이터를 담을 클래스
+    // 요청 DTO
     static class WeatherData {
         private String latitude;
         private String longitude;
@@ -73,7 +75,7 @@ public class GetWeatherData {
         public void setLongitude(String longitude) {
             this.longitude = longitude;
         }
-        
+
         public String getDate() {
             return Date;
         }

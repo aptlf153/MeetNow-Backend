@@ -17,7 +17,14 @@ public class User {
     private String password; // 해시된 비밀번호
     private String email;
     private String nickname;
+    private String phone;
     
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
 	public String getNickname() {
 		return nickname;
 	}

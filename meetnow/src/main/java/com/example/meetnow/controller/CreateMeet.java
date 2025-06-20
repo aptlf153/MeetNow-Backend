@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173") // React 앱의 URL
+@CrossOrigin(origins = "http://localhost:5173")
 public class CreateMeet {
 
     @Autowired
@@ -31,7 +31,7 @@ public class CreateMeet {
 
     @PostMapping("/api/user/createmeet")
     public String create(
-            @RequestParam(value = "file", required = false) MultipartFile file,  // 파일은 선택
+            @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("latitude") String latitude,
@@ -54,15 +54,23 @@ public class CreateMeet {
 
         String userid = jwtUtil.extractUsername(refreshToken);
 
-        // 이미지 업로드 또는 기본 이미지
-        String fileUrl;
-        if (file != null && !file.isEmpty()) {
-            fileUrl = s3Service.uploadFile(file); // S3 업로드
-        } else {
-            fileUrl = "https://your-bucket.s3.amazonaws.com/images/default-banner.jpg"; // 기본 이미지 URL
+        // ✅ 오늘 날짜에 생성된 모임 수 확인
+        String countSql = "SELECT COUNT(*) FROM meet WHERE userid = ? AND DATE(meet_date) = CURDATE()";
+        int todayCount = jdbcTemplate.queryForObject(countSql, Integer.class, userid);
+
+        if (todayCount >= 5) {
+            return "하루에 최대 5개의 모임만 생성할 수 있습니다.";
         }
 
-        // DB 저장
+        // ✅ 이미지 업로드 또는 기본 이미지 처리
+        String fileUrl;
+        if (file != null && !file.isEmpty()) {
+            fileUrl = s3Service.uploadFile(file);
+        } else {
+            fileUrl = "https://your-bucket.s3.amazonaws.com/images/default-banner.jpg";
+        }
+
+        // ✅ DB 저장
         String sql = "INSERT INTO meet (userid, title, description, latitude, longitude, location, meet_date, image_url, closed) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, false)";
 
