@@ -1,5 +1,7 @@
 package com.example.meetnow.util.cookie;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -11,23 +13,48 @@ public class CookieUtilImpl implements CookieUtil {
     @Override
     public void addCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
-                .httpOnly(true) // 클라이언트에서 접근 불가
                 .path("/")
-                .maxAge(60 * 10) // 10분
-                .sameSite("Lax") // 같은 도메인에서만
-                .secure(false) // 개발 환경에서는 false로 설정
-                .domain("localhost") // 로컬 환경에서만 유효
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(3600)
+                .sameSite("Lax")
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true) // 클라이언트에서 접근 불가
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .path("/")
-                .maxAge(60 * 60 * 24 * 7) // 7일
-                .sameSite("Lax") // 같은 도메인에서만
-                .secure(false) // 개발 환경에서는 false로 설정
-                .domain("localhost") // 로컬 환경에서만 유효
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(604800) // 7일
+                .sameSite("Lax")
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+    }
+
+    @Override
+    public void deleteCookies(HttpServletResponse response, String... names) {
+        for (String name : names) {
+            ResponseCookie cookie = ResponseCookie.from(name, null)
+                    .path("/")
+                    .httpOnly(true)
+                    .secure(true)
+                    .maxAge(0)
+                    .sameSite("Lax")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
+    }
+
+    @Override
+    public String extractRefreshTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+
+        for (Cookie cookie : request.getCookies()) {
+            if ("refreshToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

@@ -1,66 +1,73 @@
 package com.example.meetnow.controller.comment;
 
-import java.util.Map;
-
+import com.example.meetnow.service.auth.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.meetnow.util.jwt.JwtUtil;
-
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class CommentController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private AuthService authService; // ✅ 리팩토링: JwtUtil → AuthService
 
+    /**
+     * 댓글 삭제 (댓글 작성자 또는 모임 주최자만 가능)
+     */
     @DeleteMapping("/api/comments/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable int commentId, HttpServletRequest request) {
-        String userid = getCurrentUser(request);
-        if (userid == null) {
-            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        String userid;
+        try {
+            userid = authService.authenticateUser(request); // ✅ 공통 인증 로직 사용
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
         }
 
-        // 댓글 작성자와 모임 주최자 확인
-        String query = "SELECT c.userid AS comment_user, m.userid AS host_user " +
-                       "FROM comment c JOIN meet m ON c.meeting_id = m.id WHERE c.id = ?";
-        Map<String, Object> result = jdbcTemplate.queryForMap(query, commentId);
+        try {
+            String query = "SELECT c.userid AS comment_user, m.userid AS host_user " +
+                           "FROM comment c JOIN meet m ON c.meeting_id = m.id WHERE c.id = ?";
+            Map<String, Object> result = jdbcTemplate.queryForMap(query, commentId);
 
-        String commentUser = (String) result.get("comment_user");
-        String hostUser = (String) result.get("host_user");
+            String commentUser = (String) result.get("comment_user");
+            String hostUser = (String) result.get("host_user");
 
-        if (!userid.equals(commentUser) && !userid.equals(hostUser)) {
-            return ResponseEntity.status(403).body("삭제 권한이 없습니다.");
-        }
-
-        String deleteSql = "DELETE FROM comment WHERE id = ?";
-        jdbcTemplate.update(deleteSql, commentId);
-
-        return ResponseEntity.ok("댓글 삭제 완료");
-    }
-
-    private String getCurrentUser(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if ("refreshToken".equals(cookie.getName())) {
-                return jwtUtil.extractUsername(cookie.getValue());
+            if (!userid.equals(commentUser) && !userid.equals(hostUser)) {
+                return ResponseEntity.status(403).body("삭제 권한이 없습니다.");
             }
+
+            jdbcTemplate.update("DELETE FROM comment WHERE id = ?", commentId);
+            return ResponseEntity.ok("댓글 삭제 완료");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body("댓글을 찾을 수 없습니다.");
         }
-        return null;
     }
     
-    @GetMapping("/api/applications/count")
-    public Map<String, Integer> getApplicationCount(@RequestParam int meetingId) {
-        String sql = "SELECT COUNT(*) FROM application WHERE meet_id = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, meetingId);
-        return Map.of("count", count != null ? count : 0);
-    }
+    // 특정 모임의 댓글 목록 조회
+    @GetMapping("/api/comments/meeting/{meetingId}")
+    public List<Map<String, Object>> getComments(@PathVariable int meetingId) {
+        String sql = """
+            SELECT c.id, c.userid, c.content, c.created_at, u.nickname
+            FROM comment c
+            INNER JOIN user u ON c.userid = u.userid
+            WHERE c.meeting_id = ?
+            ORDER BY c.created_at DESC
+        """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> Map.of(
+                "id", rs.getInt("id"),
+                "userid", rs.getString("userid"),
+                "nickname", rs.getString("nickname"),
+                "content", rs.getString("content"),
+                "createdAt", rs.getTimestamp("created_at").toString()
+        ), meetingId);
+    }    
 }

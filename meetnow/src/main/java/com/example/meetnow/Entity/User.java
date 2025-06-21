@@ -18,7 +18,7 @@ public class User {
     private String email;
     private String nickname;
     private String phone;
-    
+
 	public String getPhone() {
 		return phone;
 	}

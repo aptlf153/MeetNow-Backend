@@ -6,53 +6,49 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.meetnow.util.jwt.JwtUtil;
+import com.example.meetnow.service.auth.AuthService;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class AddComment {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private AuthService authService; // ✅ 인증 전담 서비스
 
     @PostMapping("/api/comments")
     public ResponseEntity<?> addComment(@RequestBody Map<String, String> data, HttpServletRequest request) {
-        String refreshToken = getTokenFromCookies(request);
-        if (refreshToken == null || refreshToken.isBlank()) {
-            return ResponseEntity.status(401).body("로그인이 필요합니다.");
-        }
+        String userid;
 
-        String userid = jwtUtil.extractUsername(refreshToken);
-        if (userid == null || userid.isBlank()) {
-            return ResponseEntity.status(401).body("유효하지 않은 토큰입니다.");
+        try {
+        	userid = authService.authenticateUser(request);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
         }
 
         String content = data.get("content");
-        int meetingId = Integer.parseInt(data.get("meetingId"));
+        int meetingId;
+
+        try {
+            meetingId = Integer.parseInt(data.get("meetingId"));
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("meetingId는 숫자여야 합니다.");
+        }
 
         String sql = "INSERT INTO comment (userid, content, meeting_id) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, userid, content, meetingId);
 
         return ResponseEntity.ok(Map.of(
-            "userid", userid,
-            "content", content,
-            "createdAt", LocalDateTime.now().toString()
+                "userid", userid,
+                "content", content,
+                "createdAt", LocalDateTime.now().toString()
         ));
     }
-
-    private String getTokenFromCookies(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if ("refreshToken".equals(cookie.getName())) return cookie.getValue();
-        }
-        return null;
-    }
-} 
+}
