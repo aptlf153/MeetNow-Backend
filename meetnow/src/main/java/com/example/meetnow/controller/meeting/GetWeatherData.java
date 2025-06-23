@@ -18,7 +18,6 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173") // React 앱의 URL
 public class GetWeatherData {
 
     @Autowired

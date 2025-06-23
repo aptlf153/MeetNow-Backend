@@ -14,7 +14,6 @@ public class User {
     
     private Long id;
     private String userid;
-    private String password; // 해시된 비밀번호
     private String email;
     private String nickname;
     private String phone;
@@ -49,12 +48,5 @@ public class User {
 	public void setUserid(String userid) {
 		this.userid = userid;
 	}
-	public String getPassword() {
-		return password;
-	}
-	public void setPassword(String password) {
-		this.password = password;
-	}
-    
     
 }

@@ -12,6 +12,7 @@ public class AdminEt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     
+    private Long key;
     private String id;
     private String password; // 해시된 비밀번호
     
