@@ -17,7 +17,7 @@ public class CookieUtilImpl implements CookieUtil {
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(3600)
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -25,11 +25,13 @@ public class CookieUtilImpl implements CookieUtil {
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(604800) // 7일
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        
+        
     }
 
     @Override
@@ -40,7 +42,7 @@ public class CookieUtilImpl implements CookieUtil {
                     .httpOnly(true)
                     .secure(true)
                     .maxAge(0)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }

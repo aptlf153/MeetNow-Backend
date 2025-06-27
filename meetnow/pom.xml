@@ -110,7 +110,10 @@
 		    <artifactId>aws-java-sdk-s3</artifactId>
 		    <version>1.12.300</version> <!-- 최신 버전으로 설정 -->
 		</dependency>   
-	    
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-logging</artifactId>
+		</dependency>	    
 		</dependencies>
 
 	<build>

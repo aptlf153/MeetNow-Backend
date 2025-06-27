@@ -27,7 +27,7 @@ public class TokenService {
      */
     @Transactional
     public void deleteTokenByUserid(String userid) {
-        tokenRepository.findByUserid(userid).ifPresent(tokenRepository::delete);
+    	tokenRepository.findAllByUserid(userid).forEach(tokenRepository::delete);
     }
 
     /**

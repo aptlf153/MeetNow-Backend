@@ -1,23 +1,24 @@
 package com.example.meetnow.controller.auth;
 
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.meetnow.service.auth.GoogleOAuthService;
+import com.example.meetnow.service.auth.GoogleOAuthInterface;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/auth/google")
 public class GoogleLoginController {
 
-    private final GoogleOAuthService googleOAuthService;
+    private final GoogleOAuthInterface googleOAuthService;
 
-    public GoogleLoginController(GoogleOAuthService googleOAuthService) {
+    public GoogleLoginController(GoogleOAuthInterface googleOAuthService) {
         this.googleOAuthService = googleOAuthService;
     }
 
-    @GetMapping("/callback")
-    public ResponseEntity<Void> callback(@RequestParam("code") String code, HttpServletResponse response) {
-        return googleOAuthService.login(code, response);
+    @GetMapping("/api/auth/google/callback")
+    public void googleCallback(@RequestParam("code") String code, HttpServletResponse response) {
+        googleOAuthService.login(code, response);
     }
 }
