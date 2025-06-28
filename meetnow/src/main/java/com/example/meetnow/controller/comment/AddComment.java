@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.meetnow.service.auth.AuthService;
+import com.example.meetnow.util.xss.XssFilter;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -34,6 +35,9 @@ public class AddComment {
         }
 
         String content = data.get("content");
+        
+        content = XssFilter.clean(content);
+        
         int meetingId;
 
         try {

@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.meetnow.service.file.S3Service;
 import com.example.meetnow.util.jwt.JwtUtil;
+import com.example.meetnow.util.xss.XssFilter;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,7 +53,11 @@ public class CreateMeet {
         }
 
         String userid = jwtUtil.extractUsername(refreshToken);
-
+        
+        // ✅ 제목, 설명 XSS 필터링
+        title = XssFilter.clean(title);
+        description = XssFilter.clean(description);
+       
         // ✅ 오늘 날짜에 생성된 모임 수 확인
         String countSql = "SELECT COUNT(*) FROM meet WHERE userid = ? AND DATE(meet_date) = CURDATE()";
         int todayCount = jdbcTemplate.queryForObject(countSql, Integer.class, userid);

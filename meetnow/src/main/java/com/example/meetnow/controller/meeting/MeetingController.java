@@ -227,4 +227,9 @@ public class MeetingController {
             return ResponseEntity.status(401).body(e.getMessage());
         }
     }
+
+	public void createMeeting(Meeting dummyMeetingRequest) {
+		// TODO Auto-generated method stub
+		
+	}
 }
